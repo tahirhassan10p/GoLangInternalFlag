@@ -1,0 +1,25 @@
+FROM golang:1.9.2-windowsservercore-ltsc2016
+#FROM tahirgoshimnew
+
+#Dependencies for Choco
+RUN Set-ExecutionPolicy Bypass; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+RUN $Env:PATH = "$Env:PATH;$Env:ALLUSERSPROFILE"+'\chocolatey\bin'
+
+COPY ./vendor C:/gopath/vendor
+ADD  vendor/msys64.tar.gz /
+
+#RUN refreshenv
+RUN C:\msys64\usr\bin\bash.exe C:\gopath\vendor\install-dependencies.sh
+
+COPY ./src C:/gopath/src
+
+RUN refreshenv
+
+RUN SETX PATH "C:/msys64/mingw64/bin;$Env:PATH"
+RUN SETX PKG_CONFIG_PATH "C:/msys64/usr/local/ssl/lib/pkgconfig"
+
+WORKDIR c:/gopath/src
+RUN gcc -c addition.c
+RUN gcc -c multiplication.c
+RUN ar cr libarith.a addition.o multiplication.o
+RUN go run -ldflags "-linkmode=external" program.go
